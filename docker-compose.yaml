@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: customer_db
+      POSTGRES_USER: codetest
+      POSTGRES_PASSWORD: pass
+    volumes:
+      - ./people_places.sql:/docker-entrypoint-initdb.d/people_places.sql
+
+  app:
+    build: .
+    environment:
+      POSTGRES_DB: customer_db
+      POSTGRES_USER: codetest
+      POSTGRES_PASSWORD: pass
+    depends_on:
+      - db
+    volumes:
+      - ./data:/data
