@@ -13,7 +13,9 @@ services:
       - "5432:5432"
 
   app:
-    build: .
+    build:
+      context: ./src
+      dockerfile: Dockerfile
     environment:
       POSTGRES_DB: customer_db
       POSTGRES_USER: codetest
