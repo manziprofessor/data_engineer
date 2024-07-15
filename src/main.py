@@ -2,6 +2,7 @@ import psycopg2
 import time
 import csv
 import os
+import json
 
 def load_csv_to_temp_table(file_path, table_name, conn):
     with open(file_path, 'r') as f:
@@ -24,6 +25,23 @@ def migrate_people_data(conn):
         JOIN places p ON pt.place_of_birth = p.city
     """)
     conn.commit()
+
+def generate_summary_report(conn, output_file):
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT p.country, COUNT(pe.id) as number_of_people
+        FROM people pe
+        JOIN places p ON pe.place_of_birth = p.id
+        GROUP BY p.country;
+    """)
+    
+    results = cursor.fetchall()
+    summary = {row[0]: row[1] for row in results}
+    
+    with open(output_file, 'w') as f:
+        json.dump(summary, f, indent=4)
+    
+    cursor.close()
 
 def connect_to_db():
     retries = 5
@@ -48,6 +66,10 @@ def main():
     load_csv_to_temp_table('/data/people.csv', 'people_temp', conn)
     load_csv_to_temp_table('/data/places.csv', 'places', conn)
     migrate_people_data(conn)
+
+    # Generate summary report and write to JSON file
+    output_file = '/data/summary_report.json'
+    generate_summary_report(conn, output_file)
 
     conn.close()
 
