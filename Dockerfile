@@ -1,21 +1,23 @@
 # Use the official Python image from the Docker Hub
-FROM python:3.9-slim
+FROM python:3.8-slim
 
-# Set the working directory
+# Set the working directory in the container
 WORKDIR /app
 
-# Copy the requirements.txt file
-COPY src/requirements.txt .
+# Copy the requirements file into the container at /app
+COPY src/requirements.txt requirements.txt
 
-# Install the dependencies
+# Install any dependencies specified in requirements.txt
 RUN pip install -r requirements.txt
 
-# Copy the rest of the application code
-COPY src/ /app/src/
-COPY data/ /data/
+# Copy the source code into the container at /app
+COPY src/ src/
+COPY data/ data/
 
-# Copy the SQL schema file
-COPY people_places.sql /docker-entrypoint-initdb.d/
+# Install Dockerize
+RUN apt-get update && apt-get install -y wget
+RUN wget https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz
+RUN tar -C /usr/local/bin -xzvf dockerize-linux-amd64-v0.6.1.tar.gz
 
-# Command to run the Python script
-CMD ["python", "src/main.py"]
+# Use Dockerize to wait for PostgreSQL to be ready
+CMD ["dockerize", "-wait", "tcp://db:5432", "-timeout", "60s", "python", "src/main.py"]
